@@ -38,7 +38,7 @@ export function TaskView({ user, onUpdate }: Props) {
             setLeveledUp(true);
           }
 
-          const updatedUser = await pb.collection('users').update(user.id, {
+          const updatedUser = await pb.collection('users').update<User>(user.id, {
             xp: newXp,
             level: newLevel,
           });
