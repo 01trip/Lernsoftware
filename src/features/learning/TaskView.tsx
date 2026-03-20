@@ -1,6 +1,6 @@
 import { useState, Fragment } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Sparkles } from 'lucide-react';
+import { Check, X, Sparkles, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { pb } from '@/lib/pb';
 import type { User } from '@/lib/types';
@@ -13,6 +13,7 @@ interface Props {
 export function TaskView({ user, onUpdate }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [result, setResult] = useState<'success' | 'fail' | null>(null);
+  const [leveledUp, setLeveledUp] = useState(false);
 
   // Hardcoded task for first prototype
   const task = {
@@ -26,11 +27,20 @@ export function TaskView({ user, onUpdate }: Props) {
     setSelected(answer);
     if (answer === task.correct) {
       setResult('success');
-      // Add XP
       if (user) {
         try {
+          const newXp = user.xp + 10;
+          const nextLevelThreshold = user.level * 100;
+          let newLevel = user.level;
+
+          if (newXp >= nextLevelThreshold) {
+            newLevel = user.level + 1;
+            setLeveledUp(true);
+          }
+
           const updatedUser = await pb.collection('users').update(user.id, {
-            xp: user.xp + 10
+            xp: newXp,
+            level: newLevel,
           });
           onUpdate(updatedUser);
         } catch(e) {
@@ -45,6 +55,7 @@ export function TaskView({ user, onUpdate }: Props) {
   const retry = () => {
     setSelected(null);
     setResult(null);
+    setLeveledUp(false);
   };
 
   return (
@@ -121,7 +132,35 @@ export function TaskView({ user, onUpdate }: Props) {
                   <Sparkles className="fill-green-400 text-green-400 h-8 w-8" /> Richtig!
                 </h2>
                 <p className="text-xl font-bold text-green-600">+10 XP verdient!</p>
-                <Button 
+
+                <AnimatePresence>
+                  {leveledUp && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 40, scale: 0.7 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.7 }}
+                      transition={{ type: 'spring', damping: 8, stiffness: 180, delay: 0.2 }}
+                      className="mt-4 flex flex-col items-center gap-2"
+                    >
+                      <motion.div
+                        animate={{ scale: [1, 1.15, 1] }}
+                        transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+                        className="flex items-center gap-3 rounded-2xl bg-amber-400 px-8 py-4 shadow-[0_8px_0_0_#d97706]"
+                      >
+                        <Trophy className="h-10 w-10 fill-white text-white drop-shadow" />
+                        <span className="text-3xl font-black tracking-wide text-white drop-shadow">
+                          LEVEL UP! 🎉
+                        </span>
+                        <Trophy className="h-10 w-10 fill-white text-white drop-shadow" />
+                      </motion.div>
+                      <p className="text-lg font-bold text-amber-600">
+                        Du bist jetzt Level {user.level}!
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <Button
                    onClick={retry}
                    className="mt-6 font-bold bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-[0_4px_0_0_#16a34a] hover:-translate-y-1 hover:shadow-[0_6px_0_0_#16a34a] active:translate-y-1 active:shadow-none min-w-[200px]"
                 >
