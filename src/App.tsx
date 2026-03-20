@@ -3,7 +3,27 @@ import { OnboardingScreen } from '@/features/onboarding/OnboardingScreen';
 import { HeaderDash } from '@/features/gamification/HeaderDash';
 import { TaskView } from '@/features/learning/TaskView';
 import { ParentDashboard } from '@/features/parent/ParentDashboard';
+import { pb } from '@/lib/pb';
 import type { User } from '@/lib/types';
+
+async function updateStreak(u: User): Promise<User> {
+  const today = new Date().toISOString().split('T')[0];
+  const lastActive = u.lastActiveDate ? u.lastActiveDate.split('T')[0] : '';
+  if (lastActive === today) return u;
+
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const newStreak = lastActive === yesterday ? (u.loginStreak || 0) + 1 : 1;
+
+  try {
+    const updated = await pb.collection('users').update<User>(u.id, {
+      loginStreak: newStreak,
+      lastActiveDate: new Date().toISOString(),
+    });
+    return updated;
+  } catch {
+    return u;
+  }
+}
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -13,7 +33,13 @@ export default function App() {
     const saved = localStorage.getItem('currentUser');
     if (saved) {
       try {
-        setUser(JSON.parse(saved));
+        const parsed = JSON.parse(saved) as User;
+        setUser(parsed);
+        // Streak im Hintergrund aktualisieren
+        updateStreak(parsed).then(updated => {
+          setUser(updated);
+          localStorage.setItem('currentUser', JSON.stringify(updated));
+        });
       } catch {
         localStorage.removeItem('currentUser');
       }
@@ -21,8 +47,10 @@ export default function App() {
   }, []);
 
   const handleLogin = (u: User) => {
-    setUser(u);
-    localStorage.setItem('currentUser', JSON.stringify(u));
+    updateStreak(u).then(updated => {
+      setUser(updated);
+      localStorage.setItem('currentUser', JSON.stringify(updated));
+    });
   };
 
   const handleUserUpdate = (updatedUser: User) => {

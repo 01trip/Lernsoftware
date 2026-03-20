@@ -36,14 +36,27 @@ function getDifficulty(user: User): DifficultyLevel {
 
 // ─── Prompt-Builder je Fach ───────────────────────────────────────────────
 
+const DEUTSCH_THEMEN = ['Tiere', 'Natur', 'Schule', 'Familie', 'Essen', 'Sport', 'Jahreszeiten', 'Farben', 'Berufe', 'Verkehr'];
+const MATHE_THEMEN = ['Addition', 'Subtraktion', 'Multiplikation', 'Division', 'Geometrie', 'Messen', 'Uhrzeiten', 'Geld', 'Brüche'];
+const SACHKUNDE_THEMEN = ['Tiere', 'Pflanzen', 'Wetter', 'Körper', 'Berufe', 'Verkehr', 'Jahreszeiten', 'Umwelt', 'Geschichte', 'Geografie'];
+const ENGLISCH_THEMEN = ['Farben', 'Zahlen', 'Tiere', 'Familie', 'Schule', 'Essen', 'Wochentage', 'Körper', 'Sport', 'Hobbys'];
+
+function randomFrom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 function buildPrompt(user: User, difficulty: DifficultyLevel): string {
   const klasse = Math.max(1, Math.min(10, user.klasse));
   const alter = klasse + 5;
   const subject = user.currentSubject;
   const diffLabel = { leicht: 'einfach', mittel: 'mittelschwer', schwer: 'herausfordernd' }[difficulty];
 
+  const themenMap = { deutsch: DEUTSCH_THEMEN, mathe: MATHE_THEMEN, sachkunde: SACHKUNDE_THEMEN, englisch: ENGLISCH_THEMEN };
+  const zufallsThema = randomFrom(themenMap[subject]);
+  const zufallsId = Math.random().toString(36).substring(2, 7);
+
   const baseInstructions = `
-Du erstellst eine ${diffLabel}e ${SUBJECT_LABELS[subject]}-Aufgabe für ein Kind in Klasse ${klasse} (ca. ${alter} Jahre alt).
+[Aufgaben-ID: ${zufallsId}] Du erstellst eine ${diffLabel}e ${SUBJECT_LABELS[subject]}-Aufgabe zum Thema "${zufallsThema}" für ein Kind in Klasse ${klasse} (ca. ${alter} Jahre alt).
 
 PFLICHTREGELN:
 - Die Frage ist VOLLSTÄNDIG und SELBSTERKLÄREND – das Kind sieht nur Text, kein Bild.
@@ -153,16 +166,18 @@ export async function generateTask(user: User): Promise<Task> {
 
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         responseMimeType: 'application/json',
-        temperature: 0.9,
+        temperature: 1.0,
       },
     });
 
     const prompt = buildPrompt(user, difficulty);
+    console.log('[Gemini] Sende Prompt:', prompt.substring(0, 120));
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
+    console.log('[Gemini] Antwort:', text.substring(0, 200));
 
     // Backticks entfernen falls Gemini sie trotzdem schickt
     const clean = text.replace(/^```json\n?/, '').replace(/\n?```$/, '');

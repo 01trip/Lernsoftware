@@ -36,10 +36,10 @@ export function OnboardingScreen({ onComplete }: Props) {
   const handleComplete = async () => {
     setLoading(true);
     try {
-      // Sicherer Filter – kein SQL-Injection-Risiko
+      // Sicherer Filter – Sonderzeichen im Namen werden entfernt
+      const safeName = name.replace(/['"\\]/g, '');
       const existingUsers = await pb.collection('users').getList(1, 1, {
-        filter: 'name = {:name} && klasse = {:klasse}',
-        params: { name, klasse },
+        filter: `name = "${safeName}" && klasse = ${Number(klasse)}`,
       });
 
       const defaultSubject: Subject = 'deutsch';
