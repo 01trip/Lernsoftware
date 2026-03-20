@@ -1,9 +1,9 @@
-
 import { motion } from 'framer-motion';
 import { Trophy, Star, LogOut } from 'lucide-react';
+import type { User } from '@/lib/types';
 
 interface Props {
-  user: any;
+  user: User;
   onLogout: () => void;
 }
 

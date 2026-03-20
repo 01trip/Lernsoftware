@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { pb } from '@/lib/pb';
 import { ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { User } from '@/lib/types';
 
 interface Props {
-  onComplete: (user: any) => void;
+  onComplete: (user: User) => void;
 }
 
 export function OnboardingScreen({ onComplete }: Props) {

@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { OnboardingScreen } from '@/features/onboarding/OnboardingScreen';
 import { HeaderDash } from '@/features/gamification/HeaderDash';
 import { TaskView } from '@/features/learning/TaskView';
+import type { User } from '@/lib/types';
 
 export default function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   // Auto-login logic (for local prototype, try to load last user if wanted)
   // For now, we always show onboarding to demonstrate it, OR we can check localStorage.
@@ -15,7 +16,7 @@ export default function App() {
     }
   }, []);
 
-  const handleLogin = (u: any) => {
+  const handleLogin = (u: User) => {
     setUser(u);
     localStorage.setItem('currentUser', JSON.stringify(u));
   };

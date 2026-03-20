@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { pb } from '@/lib/pb';
+import type { User } from '@/lib/types';
 
 interface Props {
-  user: any;
-  onUpdate: (user: any) => void;
+  user: User;
+  onUpdate: (user: User) => void;
 }
 
 export function TaskView({ user, onUpdate }: Props) {
